@@ -278,9 +278,28 @@ open class AEXMLElement {
         
         if attributes.count > 0 {
             // insert attributes
-            for (key, value) in attributes {
+            // DWA: customization of sorting to bias `key` to be first or `translate` to be first
+            let customSortedAttributes = attributes.sorted { (one, two) -> Bool in
+                switch (one.key, two.key) {
+                case ("key", _):
+                    return true
+                case (_, "key"):
+                    return false
+                case ("translate", _):
+                    return true
+                case (_, "translate"):
+                    return false
+                default:
+                    return false
+                }
+            }
+            for (key, value) in customSortedAttributes {
                 xml += " \(key)=\"\(value.xmlEscaped)\""
             }
+            // unsorted attributes
+//            for (key, value) in attributes {
+//                xml += " \(key)=\"\(value.xmlEscaped)\""
+//            }
         }
         
         if value == nil && children.count == 0 {
@@ -290,6 +309,8 @@ open class AEXMLElement {
             if children.count > 0 {
                 // add children
                 xml += ">\n"
+                
+                // sort the children?
                 for child in children {
                     xml += "\(child.xml)\n"
                 }
@@ -325,8 +346,16 @@ public extension String {
         // we need to make sure "&" is escaped first. Not doing this may break escaping the other characters
         var escaped = replacingOccurrences(of: "&", with: "&amp;", options: .literal)
         
-        // replace the other four special characters
-        let escapeChars = ["<" : "&lt;", ">" : "&gt;", "'" : "&apos;", "\"" : "&quot;"]
+        // the deal is that when writing an .xliff file, we don't want extra escapes
+        // but when we write a labels.xml we _DO_ want extra escapes. Madness!
+        
+        // replace the other four special characters plus whitespace that we want to keep escaped
+        let escapeChars: [String: String]
+        if AEXMLDocument.shouldEscapeWhitespace {
+            escapeChars = ["<" : "&lt;", ">" : "&gt;", "'" : "&apos;", "\"" : "&quot;", "\n" : "\\n", "\t" : "\\t"]
+        } else {
+            escapeChars = ["<" : "&lt;", ">" : "&gt;", "'" : "&apos;", "\"" : "&quot;"]
+        }
         for (char, echar) in escapeChars {
             escaped = escaped.replacingOccurrences(of: char, with: echar, options: .literal)
         }

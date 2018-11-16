@@ -27,6 +27,8 @@ open class AEXMLDocument: AEXMLElement {
     
     public let options: AEXMLOptions
     
+    public static var shouldEscapeWhitespace: Bool = false
+    
     // MARK: - Lifecycle
     
     /**
@@ -37,8 +39,9 @@ open class AEXMLDocument: AEXMLElement {
     
         - returns: Initialized XML Document object.
     */
-    public init(root: AEXMLElement? = nil, options: AEXMLOptions = AEXMLOptions()) {
+    public init(root: AEXMLElement? = nil, options: AEXMLOptions = AEXMLOptions(), shouldEscapeWhitespace: Bool = false) {
         self.options = options
+        AEXMLDocument.shouldEscapeWhitespace = shouldEscapeWhitespace
         
         let documentName = String(describing: AEXMLDocument.self)
         super.init(name: documentName)
